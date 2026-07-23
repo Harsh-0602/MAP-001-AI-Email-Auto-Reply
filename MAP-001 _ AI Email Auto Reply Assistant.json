@@ -1,0 +1,122 @@
+{
+  "name": "MAP-001 | AI Email Auto Reply Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ba3ad950-bca4-4de4-b597-5523f5402dc7",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0aba4fec-3563-4a18-8691-eb95c4a1e468",
+      "name": "Webhook",
+      "webhookId": "ba3ad950-bca4-4de4-b597-5523f5402dc7"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a professional customer support assistant.\n\nWrite ONLY the email body.\n\nRules:\n- DO NOT write a subject.\n- DO NOT write \"Subject:\" anywhere.\n- Start directly with the greeting.\n- Keep it under 120 words.\n- Do not invent information.\n- Be polite and professional.\n- End exactly with:\n\nRegards,\nSupport Team\n\nReturn only the email body.",
+              "role": "model"
+            },
+            {
+              "content": "={{ $json.body.message }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8666a6be-e73b-4038-b6f6-3e1a3407f93f",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "1BFgBMKi5aSD84AV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.customer_email }}",
+        "subject": "Re: Your Inquiry",
+        "emailType": "text",
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "a3454868-b950-4919-b9d3-ebb380860afe",
+      "name": "Send a message",
+      "webhookId": "5d28e5ca-9eb4-4967-aaef-3652b12f0603",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kQ9m2WTzLyEevwPj",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "77415a27-e420-4c6f-b326-cb7007727929",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fd377f6946cfbc22bc80fa57c311349febc08fb52fe46642401788cafc53b382"
+  },
+  "nodeGroups": [],
+  "id": "nFPlj9phe7xNoCYK",
+  "tags": []
+}
