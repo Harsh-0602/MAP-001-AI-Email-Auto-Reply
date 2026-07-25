@@ -1,0 +1,272 @@
+{
+  "name": "MAP-001 | AI Email Auto Reply Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a professional customer support assistant.\n\nWrite ONLY the email body.\n\nRules:\n- DO NOT write a subject.\n- DO NOT write \"Subject:\" anywhere.\n- Start directly with the greeting.\n- Keep it under 120 words.\n- Do not invent information.\n- Be polite and professional.\n- End exactly with:\n\nRegards,\nSupport Team\n\nReturn only the email body.",
+              "role": "model"
+            },
+            {
+              "content": "={{ $json.body.message }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        -96
+      ],
+      "id": "8666a6be-e73b-4038-b6f6-3e1a3407f93f",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "1BFgBMKi5aSD84AV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bcaffd70-f547-443b-a6f4-f3dc265648ca",
+              "leftValue": "={{ $json.content.parts[0].text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        752,
+        -96
+      ],
+      "id": "07fd9aa5-a80c-4a3c-aec1-81972f98628c",
+      "name": "Validate AI Reply"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94987dfb-0832-4c21-b15c-d5ef74eacf6a",
+              "name": "status",
+              "value": "needs_review",
+              "type": "string"
+            },
+            {
+              "id": "0da340f4-d8ad-4e1d-8c59-e8a367bdba87",
+              "name": "customer_email",
+              "value": "={{ $('Webhook').item.json.body.customer_email }}",
+              "type": "string"
+            },
+            {
+              "id": "28031a9c-85ab-4623-bdad-86a1bb35ecc6",
+              "name": "original_message",
+              "value": "={{ $('Webhook').item.json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "65ad8976-e773-4868-9191-643ff0ea0380",
+              "name": "raw_ai_output",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "03033884-1adb-4016-820d-8d6ac61e21fe",
+              "name": "timestamp",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        192
+      ],
+      "id": "98cd6855-5016-42f1-9f81-9e2722cb02f1",
+      "name": "Mark Needs Review"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "Re: Your Inquiry",
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {
+          "sendTo": "={{ $('Webhook').item.json.body.customer_email }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        -96
+      ],
+      "id": "a3454868-b950-4919-b9d3-ebb380860afe",
+      "name": "Create Draft Reply",
+      "webhookId": "5d28e5ca-9eb4-4967-aaef-3652b12f0603",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kQ9m2WTzLyEevwPj",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "50506e80-b739-427d-b29b-b702d8ac6774",
+              "leftValue": "={{ $json.body.message.trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ba23f794-adf2-4307-afd1-7daeff4ef7a2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "8900f464-43ec-4729-b812-d1e9218e24f3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b0febb3d-87d9-4b17-b520-e772df1b6f10",
+      "name": "Webhook",
+      "webhookId": "8900f464-43ec-4729-b812-d1e9218e24f3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Validate AI Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate AI Reply": {
+      "main": [
+        [
+          {
+            "node": "Create Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Needs Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Needs Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9223549c-4c88-40ab-a1e3-489a3f9d932a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fd377f6946cfbc22bc80fa57c311349febc08fb52fe46642401788cafc53b382"
+  },
+  "nodeGroups": [],
+  "id": "nFPlj9phe7xNoCYK",
+  "tags": []
+}
